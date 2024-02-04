@@ -18,7 +18,10 @@
   }:
     flake-utils.lib.eachDefaultSystem (
       system: let
-        pkgs = import nixpkgs {inherit system;};
+        pkgs = import nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
+        };
         name = "nomad-housekeeper";
         goPlatform = {
           "aarch64-darwin" = {
@@ -47,21 +50,25 @@
             inherit name GOOS GOARCH;
             pname = name;
             src = ./.;
-            vendorHash = "sha256-6nK1irhFK9wE/fKWh1NrSn0maznXLAUddhuVcO3FFUw=";
+            vendorHash = "sha256-pFNlP3zPQhAX/emjTdiMdLIk7FQIIUQjFzQiBNTtQK4=";
             CGO_ENABLED = 0;
 
             # Typically wouldn't do this, but otherwise buildGoModule insists on
-            # messing with the outppath when cross-compiling
+            # messing with the output path when cross-compiling
             buildPhase = ''
               mkdir -p $out/bin
               go build -o $out/bin/nomad-housekeeper
             '';
-          }).overrideAttrs (old: old // args);
+          })
+          .overrideAttrs (old: old // args);
         linuxSystem = (pkgs.lib.removeSuffix "darwin" system) + "linux";
       in {
         formatter = pkgs.alejandra;
         devShells.default = pkgs.mkShell {
-          buildInputs = builtins.attrValues {inherit (pkgs) go nomad;};
+          buildInputs = [
+            pkgs.go
+            pkgs.nomad
+          ];
         };
         packages = {
           nomad-housekeeper = housekeeperRecipe goPlatform.${system};
