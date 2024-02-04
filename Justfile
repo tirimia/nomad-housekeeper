@@ -5,6 +5,6 @@ default:
 buildDocker:
     @nix build '.#dockerContainer'
 
-runDocker: loadDockerResult
+runDocker: buildDocker
     @docker load < result
     @docker run --rm nomad-housekeeper:latest
